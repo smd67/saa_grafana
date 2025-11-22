@@ -7,6 +7,7 @@ services:
     ports:
       - "3000:3000"
     volumes:
+      - ./grafana-provisioning/dashboards/default.yml:/etc/grafana/provisioning/dashboards/default.yml
       - ./grafana-provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources
     environment:
