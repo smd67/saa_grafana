@@ -12,8 +12,9 @@ services:
       - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources
     environment:
       - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource # Replace with your desired plugin ID
-      - GF_SECURITY_ADMIN_USER=myadminpasswd # Replace with your desired username
-      - GF_SECURITY_ADMIN_PASSWORD=admin # Replace with your desired password
+      - GF_SECURITY_ADMIN_USER=myadminpasswd
+      - GF_SECURITY_ADMIN_PASSWORD=admin 
+      - GF_SERVER_ROOT_URL=http://18.217.148.82:3000
     restart: unless-stopped
 
 volumes:
