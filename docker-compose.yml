@@ -12,5 +12,5 @@ services:
       - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources
     environment:
       - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource # Replace with your desired plugin ID
-      - GF_SERVER_ROOT_URL=http://18.217.148.82:3000
+      - GF_SERVER_ROOT_URL=http://18.218.224.50:3000
     restart: unless-stopped
