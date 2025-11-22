@@ -1,10 +1,10 @@
 apiVersion: 1
-    providers:
-      - name: 'My Provisioned Dashboards'
-        orgId: 1
-        folder: '' # Optional: specify a folder name or UID for the dashboards
-        type: file
-        disableDeletion: false # Set to true to prevent deletion of provisioned dashboards from the UI
-        updateIntervalSeconds: 10 # How often Grafana will scan for changes
-        options:
-          path: /etc/grafana/provisioning/dashboards # Path inside the container
+providers:
+  - name: 'My Provisioned Dashboards'
+    orgId: 1
+    folder: '' # Optional: specify a folder name or UID for the dashboards
+    type: file
+    disableDeletion: false # Set to true to prevent deletion of provisioned dashboards from the UI
+    updateIntervalSeconds: 10 # How often Grafana will scan for changes
+    options:
+      path: /etc/grafana/provisioning/dashboards # Path inside the container
