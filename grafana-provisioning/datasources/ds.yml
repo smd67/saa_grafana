@@ -14,3 +14,13 @@ datasources:
       pdcInjected: false
     readOnly: false
     apiVersion: ""
+  - name: InfluxDB_1x
+    type: influxdb
+    access: proxy
+    isDefault: true
+    url: http://host.docker.internal:8086 # Replace with your InfluxDB 1.x URL
+    database: my_database # Replace with your InfluxDB 1.x database name
+    user: my_user # Optional, replace with your InfluxDB 1.x username
+    password: my_password # Optional, replace with your InfluxDB 1.x password
+    jsonData:
+      timeInterval: "15s" # Optional, default time interval
