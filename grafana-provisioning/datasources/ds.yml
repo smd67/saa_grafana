@@ -1,15 +1,15 @@
 apiVersion: 1
 datasources:
   - id: 1
-    name: influxdb
+    name: InfluxDB
     type: influxdb
-    isDefault: false
+    access: proxy
+    editable: true
     url: http://18.218.224.50:8086 # Replace with your InfluxDB 1.x URL
-    basicAuth: false
     jsonData:
-      timeInterval: "15s" # Optional, default time interval
-      version: Flux
-      organization: SAA
       defaultBucket: SAA-Bucket
+      organization: SAA
+      version: Flux
+     
     secureJsonData:
       token: ${GF_INFLUXDB_TOKEN_FILE} # Required for InfluxDB v2, or a username/password for v1.8+ authentication
