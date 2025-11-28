@@ -124,11 +124,11 @@ if __name__ == "__main__":
         df['response_size'] = df['response_size'].astype(int)
         df.to_csv(args.output, index=False)
     if args.influx:
-        url = "http://localhost:8086"
+        url = "http://18.218.224.50:8086"
         org = "SAA"
         bucket = "SAA-Bucket"
         #token = get_secret("INFLUXDB_TOKEN")
-        token = "eN3GA81Dmh-ytowvrl7Is9g9lVvv1BQO-puEAx0EYIsCvpIvT_kQ5JaVvnVOD_GHdQn5tCGErup7_4pLZRaMXw=="
+        token = "yoJLl4vBcnp4Y45nQqOZBwn4rYto-dRe0h-cIK_4csIrRIO5gysbZ5pwNtEhvr4xzNo7-h_4-gZipRsHqYIgVw=="
         df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d/%b/%Y:%H:%M:%S %z')
         df['response_size'] = df['response_size'].astype(int)
         with InfluxDBClient(url=url, token=token, org=org) as client:

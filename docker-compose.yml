@@ -22,6 +22,7 @@ services:
     environment:
       - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource # Replace with your desired plugin ID
       - GF_SERVER_ROOT_URL=http://18.218.224.50:3000
+      - GF_INFLUXDB_TOKEN_FILE=/run/secrets/influxdb_token
     restart: unless-stopped
 
 volumes:

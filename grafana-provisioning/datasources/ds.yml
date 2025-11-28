@@ -11,3 +11,7 @@ datasources:
     password: my_password # Optional, replace with your InfluxDB 1.x password
     jsonData:
       timeInterval: "15s" # Optional, default time interval
+      version: Flux
+      tlsSkipVerify: true
+    secureJsonData:
+      token: ${GF_INFLUXDB_TOKEN_FILE} # Required for InfluxDB v2, or a username/password for v1.8+ authentication
