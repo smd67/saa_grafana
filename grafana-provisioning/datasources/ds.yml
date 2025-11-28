@@ -5,7 +5,7 @@ datasources:
     type: influxdb
     access: proxy
     isDefault: true
-    url: http://18.218.224.50:8086 # Replace with your InfluxDB 1.x URL
+    url: http://host.docker.internal:8086 # Replace with your InfluxDB 1.x URL
     database: my_database # Replace with your InfluxDB 1.x database name
     user: my_user # Optional, replace with your InfluxDB 1.x username
     password: my_password # Optional, replace with your InfluxDB 1.x password
