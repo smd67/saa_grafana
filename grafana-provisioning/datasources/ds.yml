@@ -14,6 +14,6 @@ datasources:
       version: Flux
       organization: SAA
       defaultBucket: SAA-Bucket
-      tlsSkipVerify: true
+      basicAuth: true
     secureJsonData:
       token: ${INFLUXDB_TOKEN_FILE} # Required for InfluxDB v2, or a username/password for v1.8+ authentication
