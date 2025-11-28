@@ -1,0 +1,20 @@
+[project]
+name = "saa-grafana"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "smd67",email = "dimigstephenm@gmail.com"}
+]
+readme = "README.md"
+requires-python = "<4.0, >=3.12"
+dependencies = [
+    "user-agent (>=0.1.14,<0.2.0)",
+    "influxdb-client (>=1.49.0,<2.0.0)",
+    "pandas (>=2.3.3,<3.0.0)",
+    "user-agents (>=2.2.0,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
