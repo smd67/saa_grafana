@@ -14,7 +14,8 @@ datasources:
       pdcInjected: false
     readOnly: false
     apiVersion: ""
-  - name: InfluxDB_1x
+  - id: 2
+    name: InfluxDB_1x
     type: influxdb
     access: proxy
     isDefault: true
