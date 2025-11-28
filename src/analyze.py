@@ -128,7 +128,7 @@ if __name__ == "__main__":
         org = "SAA"
         bucket = "SAA-Bucket"
         #token = get_secret("INFLUXDB_TOKEN")
-        token = "yoJLl4vBcnp4Y45nQqOZBwn4rYto-dRe0h-cIK_4csIrRIO5gysbZ5pwNtEhvr4xzNo7-h_4-gZipRsHqYIgVw=="
+        token = "H6lfqx_JcaeM_4dh9aoxpZgWz6hxoRh8PJUTd8wBtpgZkK4A30ANkglePQ_NET6xH1URJSFAvMm-cinDoZPbcg=="
         df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d/%b/%Y:%H:%M:%S %z')
         df['response_size'] = df['response_size'].astype(int)
         with InfluxDBClient(url=url, token=token, org=org) as client:
