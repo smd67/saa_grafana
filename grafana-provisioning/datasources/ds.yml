@@ -16,4 +16,4 @@ datasources:
       defaultBucket: SAA-Bucket
       tlsSkipVerify: true
     secureJsonData:
-      token: ${GF_INFLUXDB_TOKEN_FILE} # Required for InfluxDB v2, or a username/password for v1.8+ authentication
+      token: ${INFLUXDB_TOKEN_FILE} # Required for InfluxDB v2, or a username/password for v1.8+ authentication
