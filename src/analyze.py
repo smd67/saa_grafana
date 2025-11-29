@@ -158,8 +158,9 @@ if __name__ == "__main__":
         url = "http://18.218.224.50:8086"
         org = "SAA"
         bucket = "SAA-Bucket"
-        #token = get_secret("INFLUXDB_TOKEN")
-        token = "PnANFW_6sLmiTOwY4lUjLBEKjpZrWF2QaW4_HIN_noooEoc0Bhjw6vnHnNUEha95r_X3NnZAWkYvj9t6oUK5XA=="
+        token_file = "secrets/influxdb_token.txt"
+        with open(token_file, "r") as f:
+            token = f.read()
         df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d/%b/%Y:%H:%M:%S %z')
         df['response_size'] = df['response_size'].astype(int)
         with InfluxDBClient(url=url, token=token, org=org) as client:
