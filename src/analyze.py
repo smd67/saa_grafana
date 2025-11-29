@@ -107,12 +107,20 @@ if __name__ == "__main__":
     parser.add_argument("--size", action="store_true", help="Print out response size data")
     parser.add_argument("--output", default=None, help="Specify the path to the output file.")
     parser.add_argument("--influx", action="store_true", help="Write to influxdb")
+    parser.add_argument("--batch", action="store_true", help="Write to influxdb")
 
     # 3. Parse the arguments
     args = parser.parse_args()
 
-    # 4. Invoke main method
-    df = extract(args.logfiles)
+    if args.batch:
+        directory_path = "/var/ssa/data"
+        entries = os.listdir(directory_path)
+        for f in entries:
+            print(f)
+        #df  = extract(logfiles)
+
+    else:
+        df = extract(args.logfiles)
 
     if args.hits:
          output_hits(df)
@@ -128,7 +136,7 @@ if __name__ == "__main__":
         org = "SAA"
         bucket = "SAA-Bucket"
         #token = get_secret("INFLUXDB_TOKEN")
-        token = "H6lfqx_JcaeM_4dh9aoxpZgWz6hxoRh8PJUTd8wBtpgZkK4A30ANkglePQ_NET6xH1URJSFAvMm-cinDoZPbcg=="
+        token = "PnANFW_6sLmiTOwY4lUjLBEKjpZrWF2QaW4_HIN_noooEoc0Bhjw6vnHnNUEha95r_X3NnZAWkYvj9t6oUK5XA=="
         df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d/%b/%Y:%H:%M:%S %z')
         df['response_size'] = df['response_size'].astype(int)
         with InfluxDBClient(url=url, token=token, org=org) as client:
