@@ -122,7 +122,7 @@ if __name__ == "__main__":
         if os.path.exists(ts_file):
             with open(ts_file, "r") as f:
                 ts_format = "%Y-%m-%d %H:%M:%S.%f"
-                ts = datetime.strptime(f.read(), ts_format)
+                ts = datetime.datetime.strptime(f.read(), ts_format)
         entries = os.listdir(directory_path)
         for filename in entries:
             if ts_file == f"{directory_path}/{filename}":
