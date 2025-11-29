@@ -160,7 +160,7 @@ if __name__ == "__main__":
         bucket = "SAA-Bucket"
         token_file = "secrets/influxdb_token.txt"
         with open(token_file, "r") as f:
-            token = f.read()
+            token = f.read()[:-1]
         df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d/%b/%Y:%H:%M:%S %z')
         df['response_size'] = df['response_size'].astype(int)
         with InfluxDBClient(url=url, token=token, org=org) as client:
