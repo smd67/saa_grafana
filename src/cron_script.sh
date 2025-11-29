@@ -10,4 +10,4 @@ pyenv local 3.12.11
 cd /home/ec2-user/repos/saa_grafana
 
 # Execute your Python script
-poetry run  python src/analyze.py --batch --influx >> /var/saa/logs/logfile.log 2>&1
+$PYENV_ROOT/shims/poetry run  python src/analyze.py --batch --influx >> /var/saa/logs/logfile.log 2>&1
