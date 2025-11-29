@@ -12,4 +12,4 @@ eval "$(pyenv virtualenv-init -)"
 cd /home/ec2-user/repos/saa_grafana
 
 # Execute your Python script
-poetry run  python src/analyze.py --batch --influx >> /path/to/logfile.log 2>&1
+poetry run  python src/analyze.py --batch --influx >> /var/saa/logs/logfile.log 2>&1
