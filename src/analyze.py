@@ -118,7 +118,7 @@ if __name__ == "__main__":
         for f in entries:
             print(f)
         #df  = extract(logfiles)
-
+        exit(0)
     else:
         df = extract(args.logfiles)
 
