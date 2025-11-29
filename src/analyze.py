@@ -141,9 +141,7 @@ if __name__ == "__main__":
             with open(ts_file, "w") as f:
                 f.write(str(last_ts))
         
-        print(logfiles)
-        #df  = extract(logfiles)
-        exit(0)
+        df  = extract(logfiles)
     else:
         df = extract(args.logfiles)
 
