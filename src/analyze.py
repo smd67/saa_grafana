@@ -6,6 +6,7 @@ from collections import Counter
 import pandas as pd
 import os
 from typing import Union
+import datetime
 
 from user_agents import parse
 from influxdb_client import InfluxDBClient, Point, WritePrecision
@@ -114,10 +115,35 @@ if __name__ == "__main__":
 
     if args.batch:
         directory_path = "/var/saa/data"
+        ts_file = f"{directory_path}/.ts"
+        ts = None
+        last_ts = None
+        logfiles = []
+        if os.path.exists(ts_file):
+            with open(ts_file, "r") as f:
+                ts = datetime.datetime.fromtimestamp(f.read()[:-1])
         entries = os.listdir(directory_path)
-        for f in entries:
-            print(f)
-        #df  = extract(logfiles)
+        for filename in entries:
+            if ts_file == f"{directory_path}/{filename}":
+                continue
+            else:
+                creation_timestamp = os.path.getctime(f"{directory_path}/{filename}")
+                creation_datetime = datetime.datetime.fromtimestamp(creation_timestamp)
+                print(f"filename={directory_path}/{filename}; creation_datetime={str(creation_datetime)}; last_ts={last_ts}")
+                if not last_ts or creation_datetime > last_ts:
+                    last_ts = creation_datetime
+                if ts:
+                    if creation_datetime >= ts:
+                        logfiles.append(f"{directory_path}/{filename}")
+                else:
+                    logfiles.append(f"{directory_path}/{filename}")
+        if last_ts:
+            print(f"last_ts={last_ts}")
+            with open(ts_file, "w") as f:
+                f.write(str(last_ts))
+        
+        print(logfiles)
+        df  = extract(logfiles)
         exit(0)
     else:
         df = extract(args.logfiles)
