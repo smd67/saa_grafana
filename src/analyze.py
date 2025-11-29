@@ -130,16 +130,14 @@ if __name__ == "__main__":
             else:
                 creation_timestamp = os.path.getctime(f"{directory_path}/{filename}")
                 creation_datetime = datetime.datetime.fromtimestamp(creation_timestamp)
-                print(f"filename={directory_path}/{filename}; creation_datetime={str(creation_datetime)}; last_ts={last_ts}")
                 if not last_ts or creation_datetime > last_ts:
                     last_ts = creation_datetime
                 if ts:
-                    if creation_datetime >= ts:
+                    if creation_datetime > ts:
                         logfiles.append(f"{directory_path}/{filename}")
                 else:
                     logfiles.append(f"{directory_path}/{filename}")
         if last_ts:
-            print(f"last_ts={last_ts}")
             with open(ts_file, "w") as f:
                 f.write(str(last_ts))
         
