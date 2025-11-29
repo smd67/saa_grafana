@@ -113,7 +113,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.batch:
-        directory_path = "/var/ssa/data"
+        directory_path = "/var/saa/data"
         entries = os.listdir(directory_path)
         for f in entries:
             print(f)
