@@ -121,7 +121,7 @@ if __name__ == "__main__":
         logfiles = []
         if os.path.exists(ts_file):
             with open(ts_file, "r") as f:
-                ts = datetime.datetime.fromtimestamp(f.read()[:-1])
+                ts = datetime.datetime.fromtimestamp(f.read())
         entries = os.listdir(directory_path)
         for filename in entries:
             if ts_file == f"{directory_path}/{filename}":
@@ -143,7 +143,7 @@ if __name__ == "__main__":
                 f.write(str(last_ts))
         
         print(logfiles)
-        df  = extract(logfiles)
+        #df  = extract(logfiles)
         exit(0)
     else:
         df = extract(args.logfiles)
