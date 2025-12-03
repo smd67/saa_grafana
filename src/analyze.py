@@ -1,5 +1,3 @@
-
-
 import re
 import argparse
 from collections import Counter
@@ -7,6 +5,7 @@ import pandas as pd
 import os
 from typing import Union
 import datetime
+import time
 
 from user_agents import parse
 from influxdb_client import InfluxDBClient, Point, WritePrecision
@@ -15,11 +14,11 @@ from influxdb_client.client.write_api import SYNCHRONOUS
 
 def extract(log_files: list):
     log_pattern = re.compile(
-        r'^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) saatriangle.org - '  # IP address
+            r'^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) (?:www[.])?saatriangle.org - '  # IP address
         r'\[(\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} \+\d{4})\] ' # Timestamp
         r'"(\w+)\s(.+?)\s(HTTP/\d\.\d)" ' # Request method, URL, HTTP version
         r'(\d{3}) (\d+|-)' # Status code and response size
-        r' "-" '
+        r' ".*" '
         r'("([^"]*)")' # User-agent (optional)
     )
 
@@ -38,9 +37,15 @@ def extract(log_files: list):
                     print(f"Operating System Version: {user_agent_obj.os.version_string}")
                     print(f"Device Type: {'Mobile' if user_agent_obj.is_mobile else 'Tablet' if user_agent_obj.is_tablet else 'Desktop'}")
                     print(f"Is a bot: {user_agent_obj.is_bot}")
+                    print(f"URL: {url}")
+                    print(f"Timestamp: {timestamp}")
+                    print(f"Logfile: {log_file}")
+                    print(f"MATCH: {line}")
                     print()
                     user_agent = user_agent_obj.browser.family if user_agent_obj.browser.family != "Other" else user_agent_str
                     rows.append((ip_address, timestamp, method, url, http_version, status_code, response_size, user_agent, user_agent_obj.is_bot))
+                else:
+                    print(f"NO MATCH: {line}")
 
     df = pd.DataFrame(rows, columns=['ip_address', 'timestamp', 'method', 'url', 'http_version', 'status_code', 'response_size', 'user_agent', 'is_bot'])
     return df
@@ -182,6 +187,12 @@ if __name__ == "__main__":
                         .time(row['timestamp'], WritePrecision.MS) # Use appropriate precision
 
                 # Write the data point
-                write_api.write(bucket=bucket, org=org, record=point)
+                try:
+                    write_api.write(bucket=bucket, org=org, record=point)
+                except Exception as e:
+                    print(f"Error: unexpected exception writing to influxdb. e={e}")
+                if not (index % 1000):
+                    print(f"Sleeping for influxdb {index} ...")
+                    time.sleep(10)
 
             print("Metric written successfully!")

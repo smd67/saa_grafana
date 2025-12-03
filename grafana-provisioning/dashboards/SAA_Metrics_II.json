@@ -18,13 +18,13 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 0,
+  "id": 2,
   "links": [],
   "panels": [
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "${SAADatasource}"
+        "uid": "P951FEA4DE68E13C5"
       },
       "fieldConfig": {
         "defaults": {
@@ -85,7 +85,7 @@
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "${SAADatasource}"
+            "uid": "P951FEA4DE68E13C5"
           },
           "query": "from(bucket: \"SAA-Bucket\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"http_access_log\" and r._field == \"is_bot\")\n",
           "refId": "A"
@@ -211,7 +211,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "${SAADatasource}"
+        "uid": "P951FEA4DE68E13C5"
       },
       "fieldConfig": {
         "defaults": {
@@ -266,19 +266,14 @@
       "options": {
         "cellHeight": "sm",
         "showHeader": true,
-        "sortBy": [
-          {
-            "desc": true,
-            "displayName": "count"
-          }
-        ]
+        "sortBy": []
       },
       "pluginVersion": "12.3.0",
       "targets": [
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "${SAADatasource}"
+            "uid": "P951FEA4DE68E13C5"
           },
           "query": "from(bucket: \"SAA-Bucket\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"http_access_log\" and r._field == \"status_code\")\n",
           "refId": "A"
@@ -317,7 +312,277 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "${SAADatasource}"
+        "uid": "P951FEA4DE68E13C5"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "is_bot"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "url"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "user_agent"
+            },
+            "properties": []
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 10,
+      "maxDataPoints": 100000,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P951FEA4DE68E13C5"
+          },
+          "query": "from(bucket: \"SAA-Bucket\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"http_access_log\")\n    |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n    |> keep(columns: [\"_time\", \"user_agent\", \"is_bot\", \"url\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Calendar Hits by Bots",
+      "transformations": [
+        {
+          "id": "filterByValue",
+          "options": {
+            "filters": [
+              {
+                "config": {
+                  "id": "substring",
+                  "options": {
+                    "value": "calendar"
+                  }
+                },
+                "fieldName": "url"
+              },
+              {
+                "config": {
+                  "id": "regex",
+                  "options": {
+                    "value": ".*true.*"
+                  }
+                },
+                "fieldName": "is_bot"
+              }
+            ],
+            "match": "all",
+            "type": "include"
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "user_agent": {
+                "aggregations": [
+                  "count"
+                ],
+                "operation": "groupby"
+              }
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "user_agent (count)"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P951FEA4DE68E13C5"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "continuous-GrYlRd"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "is_bot"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "url"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "user_agent"
+            },
+            "properties": []
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 8
+      },
+      "id": 9,
+      "maxDataPoints": 100000,
+      "options": {
+        "displayMode": "lcd",
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "",
+          "values": true
+        },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "12.3.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P951FEA4DE68E13C5"
+          },
+          "query": "from(bucket: \"SAA-Bucket\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"http_access_log\")\n    |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n    |> keep(columns: [\"_time\", \"user_agent\", \"ip_address\"])",
+          "refId": "A"
+        }
+      ],
+      "title": "Hits by IP Address",
+      "transformations": [
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "ip_address": {
+                "aggregations": [
+                  "count"
+                ],
+                "operation": "groupby"
+              },
+              "user_agent": {
+                "aggregations": []
+              }
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": {},
+            "sort": [
+              {
+                "desc": true,
+                "field": "ip_address (count)"
+              }
+            ]
+          }
+        }
+      ],
+      "type": "bargauge"
+    },
+    {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P951FEA4DE68E13C5"
       },
       "fieldConfig": {
         "defaults": {
@@ -348,7 +613,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 16
       },
       "id": 3,
       "maxDataPoints": 100000,
@@ -386,7 +651,7 @@
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "${SAADatasource}"
+            "uid": "P951FEA4DE68E13C5"
           },
           "query": "from(bucket: \"SAA-Bucket\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"http_access_log\" and r._field == \"user_agent\")",
           "refId": "A"
@@ -425,7 +690,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "${SAADatasource}"
+        "uid": "P951FEA4DE68E13C5"
       },
       "fieldConfig": {
         "defaults": {
@@ -496,7 +761,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 16
+        "y": 24
       },
       "id": 5,
       "maxDataPoints": 100000,
@@ -519,7 +784,7 @@
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "${SAADatasource}"
+            "uid": "P951FEA4DE68E13C5"
           },
           "query": "from(bucket: \"SAA-Bucket\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"http_access_log\" and r._field == \"user_agent\")\n    |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n    |> keep(columns: [\"_time\", \"user_agent\"])",
           "refId": "A"
@@ -584,7 +849,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "${SAADatasource}"
+        "uid": "P951FEA4DE68E13C5"
       },
       "fieldConfig": {
         "defaults": {
@@ -615,7 +880,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 24
+        "y": 32
       },
       "id": 4,
       "maxDataPoints": 100000,
@@ -653,7 +918,7 @@
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "${SAADatasource}"
+            "uid": "P951FEA4DE68E13C5"
           },
           "query": "from(bucket: \"SAA-Bucket\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"http_access_log\")\n    |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n    |> keep(columns: [\"_time\", \"user_agent\", \"response_size\"])",
           "refId": "A"
@@ -684,7 +949,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "${SAADatasource}"
+        "uid": "P951FEA4DE68E13C5"
       },
       "fieldConfig": {
         "defaults": {
@@ -715,7 +980,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 40
       },
       "id": 7,
       "maxDataPoints": 100000,
@@ -753,7 +1018,7 @@
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "${SAADatasource}"
+            "uid": "P951FEA4DE68E13C5"
           },
           "query": "from(bucket: \"SAA-Bucket\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"http_access_log\")\n    |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n    |> keep(columns: [\"_time\", \"user_agent\", \"is_bot\"])",
           "refId": "A"
@@ -810,7 +1075,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "${SAADatasource}"
+        "uid": "P951FEA4DE68E13C5"
       },
       "fieldConfig": {
         "defaults": {
@@ -881,7 +1146,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 40
+        "y": 48
       },
       "id": 6,
       "maxDataPoints": 100000,
@@ -903,7 +1168,7 @@
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "${SAADatasource}"
+            "uid": "P951FEA4DE68E13C5"
           },
           "query": "from(bucket: \"SAA-Bucket\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"http_access_log\")\n    |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n    |> keep(columns: [\"_time\", \"user_agent\", \"is_bot\"])",
           "refId": "A"
@@ -998,7 +1263,7 @@
     {
       "datasource": {
         "type": "influxdb",
-        "uid": "${SAADatasource}"
+        "uid": "P951FEA4DE68E13C5"
       },
       "fieldConfig": {
         "defaults": {
@@ -1029,7 +1294,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 48
+        "y": 56
       },
       "id": 8,
       "maxDataPoints": 100000,
@@ -1067,7 +1332,7 @@
         {
           "datasource": {
             "type": "influxdb",
-            "uid": "${SAADatasource}"
+            "uid": "P951FEA4DE68E13C5"
           },
           "query": "from(bucket: \"SAA-Bucket\")\n    |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n    |> filter(fn: (r) => r._measurement == \"http_access_log\")\n    |> pivot(rowKey:[\"_time\"], columnKey: [\"_field\"], valueColumn: \"_value\")\n    |> keep(columns: [\"_time\", \"user_agent\", \"is_bot\", \"response_size\"])",
           "refId": "A"
@@ -1128,5 +1393,5 @@
   "timezone": "browser",
   "title": "SAA Metrics II",
   "uid": "admhpr6",
-  "version": 22
+  "version": 1
 }
