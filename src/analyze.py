@@ -1,3 +1,18 @@
+"""
+This file parses the http access file and outputs them in various ways.
+
+Input options:
+--batch will process files whose create timestamp is >= the last log created. This option
+        is used when being run as a cron.
+--logfiles <list of logfiles> will process the arguments given as http access log files.
+
+Output options:
+--hits summarizes number of hits by user-agent
+--size summarizes response size by user-agent
+--output <filename> outputs parsed fields as a csv file
+--influx outputs parsed fields as influx db metrics
+"""
+
 import re
 import argparse
 from collections import Counter
@@ -12,7 +27,20 @@ from influxdb_client import InfluxDBClient, Point, WritePrecision
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 
-def extract(log_files: list):
+def extract(log_files: list) -> pd.DataFrame:
+    """
+    Extract fields from http access log
+
+    Parameters
+    ----------
+    log_files : list
+        List of http access logs to process.
+
+    Returns
+    -------
+    pd.DataFrame
+        A cleaned and processed dataframe derived from the http access log fields.
+    """
     log_pattern = re.compile(
             r'^(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}) (?:www[.])?saatriangle.org - '  # IP address
         r'\[(\d{2}/\w{3}/\d{4}:\d{2}:\d{2}:\d{2} \+\d{4})\] ' # Timestamp
@@ -52,6 +80,14 @@ def extract(log_files: list):
 
 
 def output_hits(df: pd.DataFrame):
+    """
+    Summary output of number of hits by user agent.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe consisting of fields parsed from the http access logs.
+    """
     user_agents = df['user_agent'].to_list()
     counts = Counter(user_agents)
 
@@ -65,6 +101,14 @@ def output_hits(df: pd.DataFrame):
         print(f"{k}: {v}")
 
 def output_response_size(df: pd.DataFrame):
+    """
+    Summary output of responsize size by user agent.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe consisting of fields parsed from the http access logs.
+    """
     response_size_dict = {}
     for index, row in df.iterrows():
         user_agent = row['user_agent']
@@ -78,6 +122,88 @@ def output_response_size(df: pd.DataFrame):
     sorted_items_desc = sorted(response_size_dict.items(), key=lambda item: item[1], reverse=True)
     for k, v in dict(sorted_items_desc[0:20]).items():
         print(f"{k}: {v}")
+
+def output_influx(df: pd.DataFrame) -> None:
+    """
+    Process dataframe and send metrics to influx db.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe containing parsed data from http access logs.
+    """
+    url = "http://18.218.224.50:8086"
+    org = "SAA"
+    bucket = "SAA-Bucket"
+    token_file = "secrets/influxdb_token.txt"
+    with open(token_file, "r") as f:
+        token = f.read()[:-1]
+    df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d/%b/%Y:%H:%M:%S %z')
+    df['response_size'] = df['response_size'].astype(int)
+    with InfluxDBClient(url=url, token=token, org=org) as client:
+        # Create a write api instance
+        write_api = client.write_api(write_options=SYNCHRONOUS)
+
+        for index, row in df.iterrows():
+            # ip_address,timestamp,method,url,http_version,status_code,response_size,user_agent,is_bot
+            # Create a data point using the Point structure
+            point = Point("http_access_log") \
+                    .field("user_agent", row['user_agent']) \
+                    .field("ip_address", row['ip_address']) \
+                    .field("method", row['method']) \
+                    .field("url", row['url']) \
+                    .field("http_version", row['http_version']) \
+                    .field("status_code", row['status_code']) \
+                    .field("response_size", row['response_size']) \
+                    .field("is_bot", row['is_bot']) \
+                    .time(row['timestamp'], WritePrecision.MS) # Use appropriate precision
+
+            # Write the data point
+            try:
+                write_api.write(bucket=bucket, org=org, record=point)
+            except Exception as e:
+                print(f"Error: unexpected exception writing to influxdb. e={e}")
+            if not (index % 1000):
+                print(f"Sleeping for influxdb {index} ...")
+                time.sleep(10)
+
+        print("Metric written successfully!")
+def process_batch() -> list:
+    """
+    Do steps to find log file names for batch processing.
+
+    Returns
+    -------
+    list
+        A list of logfiles to be processed
+    """
+    directory_path = "/var/saa/data"
+    ts_file = f"{directory_path}/.ts"
+    ts = None
+    last_ts = None
+    logfiles = []
+    if os.path.exists(ts_file):
+        with open(ts_file, "r") as f:
+            ts_format = "%Y-%m-%d %H:%M:%S.%f"
+            ts = datetime.datetime.strptime(f.read(), ts_format)
+    entries = os.listdir(directory_path)
+    for filename in entries:
+        if ts_file == f"{directory_path}/{filename}":
+            continue
+        else:
+            creation_timestamp = os.path.getctime(f"{directory_path}/{filename}")
+            creation_datetime = datetime.datetime.fromtimestamp(creation_timestamp)
+            if not last_ts or creation_datetime > last_ts:
+                last_ts = creation_datetime
+            if ts:
+                if creation_datetime > ts:
+                    logfiles.append(f"{directory_path}/{filename}")
+            else:
+                logfiles.append(f"{directory_path}/{filename}")
+    if last_ts:
+        with open(ts_file, "w") as f:
+            f.write(str(last_ts))
+    return logfiles
 
 def get_secret(key: str) -> Union[str, None]:
     """
@@ -115,41 +241,16 @@ if __name__ == "__main__":
     parser.add_argument("--influx", action="store_true", help="Write to influxdb")
     parser.add_argument("--batch", action="store_true", help="Write to influxdb")
 
-    # 3. Parse the arguments
+     # 3. Process input parameters
     args = parser.parse_args()
 
     if args.batch:
-        directory_path = "/var/saa/data"
-        ts_file = f"{directory_path}/.ts"
-        ts = None
-        last_ts = None
-        logfiles = []
-        if os.path.exists(ts_file):
-            with open(ts_file, "r") as f:
-                ts_format = "%Y-%m-%d %H:%M:%S.%f"
-                ts = datetime.datetime.strptime(f.read(), ts_format)
-        entries = os.listdir(directory_path)
-        for filename in entries:
-            if ts_file == f"{directory_path}/{filename}":
-                continue
-            else:
-                creation_timestamp = os.path.getctime(f"{directory_path}/{filename}")
-                creation_datetime = datetime.datetime.fromtimestamp(creation_timestamp)
-                if not last_ts or creation_datetime > last_ts:
-                    last_ts = creation_datetime
-                if ts:
-                    if creation_datetime > ts:
-                        logfiles.append(f"{directory_path}/{filename}")
-                else:
-                    logfiles.append(f"{directory_path}/{filename}")
-        if last_ts:
-            with open(ts_file, "w") as f:
-                f.write(str(last_ts))
-        
+        logfiles = process_batch()
         df  = extract(logfiles)
     else:
         df = extract(args.logfiles)
 
+    # 4. Process output parameters
     if args.hits:
          output_hits(df)
     if args.size:
@@ -160,39 +261,4 @@ if __name__ == "__main__":
         df['response_size'] = df['response_size'].astype(int)
         df.to_csv(args.output, index=False)
     if args.influx:
-        url = "http://18.218.224.50:8086"
-        org = "SAA"
-        bucket = "SAA-Bucket"
-        token_file = "secrets/influxdb_token.txt"
-        with open(token_file, "r") as f:
-            token = f.read()[:-1]
-        df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d/%b/%Y:%H:%M:%S %z')
-        df['response_size'] = df['response_size'].astype(int)
-        with InfluxDBClient(url=url, token=token, org=org) as client:
-            # Create a write api instance
-            write_api = client.write_api(write_options=SYNCHRONOUS)
-
-            for index, row in df.iterrows():
-                # ip_address,timestamp,method,url,http_version,status_code,response_size,user_agent,is_bot
-                # Create a data point using the Point structure
-                point = Point("http_access_log") \
-                        .field("user_agent", row['user_agent']) \
-                        .field("ip_address", row['ip_address']) \
-                        .field("method", row['method']) \
-                        .field("url", row['url']) \
-                        .field("http_version", row['http_version']) \
-                        .field("status_code", row['status_code']) \
-                        .field("response_size", row['response_size']) \
-                        .field("is_bot", row['is_bot']) \
-                        .time(row['timestamp'], WritePrecision.MS) # Use appropriate precision
-
-                # Write the data point
-                try:
-                    write_api.write(bucket=bucket, org=org, record=point)
-                except Exception as e:
-                    print(f"Error: unexpected exception writing to influxdb. e={e}")
-                if not (index % 1000):
-                    print(f"Sleeping for influxdb {index} ...")
-                    time.sleep(10)
-
-            print("Metric written successfully!")
+        output_influx(df)

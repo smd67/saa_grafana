@@ -1,4 +1,8 @@
- #!/bin/bash
+#!/bin/bash
+
+#
+# Script used to run the python analyze script from cron.
+# 
 
 # Source pyenv and activate the desired virtual environment
 export PYENV_ROOT="/home/ec2-user/.pyenv"
