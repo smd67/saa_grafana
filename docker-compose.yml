@@ -19,8 +19,9 @@ services:
       - ./grafana-provisioning/dashboards/default.yml:/etc/grafana/provisioning/dashboards/default.yml
       - ./grafana-provisioning/dashboards:/etc/grafana/provisioning/dashboards
       - ./grafana-provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./grafana-storage:/var/lib/grafana
     environment:
-      - GF_SERVER_ROOT_URL=http://18.218.224.50:3000
+      - GF_SERVER_ROOT_URL=http://127.0.0.1:3000
       - GF_INFLUXDB_TOKEN_FILE=/run/secrets/influxdb_token
     secrets:
           - influxdb_token
@@ -28,7 +29,7 @@ services:
 
 volumes:
   influxdb_data:
-  grafana_data:
+  grafana-storage:
 
 secrets:
   influxdb_token:

@@ -65,17 +65,22 @@ def extract(log_files: list) -> pd.DataFrame:
                     print(f"Operating System Version: {user_agent_obj.os.version_string}")
                     print(f"Device Type: {'Mobile' if user_agent_obj.is_mobile else 'Tablet' if user_agent_obj.is_tablet else 'Desktop'}")
                     print(f"Is a bot: {user_agent_obj.is_bot}")
+                    full_url = url
+                    if '?' in url:
+                        url = url.split('?')[0]
+                    elif '&' in url:
+                        url = url.split('&')[0]
                     print(f"URL: {url}")
                     print(f"Timestamp: {timestamp}")
                     print(f"Logfile: {log_file}")
                     print(f"MATCH: {line}")
                     print()
                     user_agent = user_agent_obj.browser.family if user_agent_obj.browser.family != "Other" else user_agent_str
-                    rows.append((ip_address, timestamp, method, url, http_version, status_code, response_size, user_agent, user_agent_obj.is_bot))
+                    rows.append((ip_address, timestamp, method, url, http_version, status_code, response_size, user_agent, user_agent_obj.is_bot, full_url))
                 else:
                     print(f"NO MATCH: {line}")
 
-    df = pd.DataFrame(rows, columns=['ip_address', 'timestamp', 'method', 'url', 'http_version', 'status_code', 'response_size', 'user_agent', 'is_bot'])
+    df = pd.DataFrame(rows, columns=['ip_address', 'timestamp', 'method', 'url', 'http_version', 'status_code', 'response_size', 'user_agent', 'is_bot', 'full_url'])
     return df
 
 
@@ -97,6 +102,62 @@ def output_hits(df: pd.DataFrame):
     sorted_list = sorted(combined, reverse=True)
 
     print("=========== HITS ================")
+    for v, k in sorted_list[0:20]:
+        print(f"{k}: {v}")
+
+def output_hits_by_url(df: pd.DataFrame, filter: str = None, ip_filter: str = None):
+    """
+    Summary output of number of hits by user agent.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe consisting of fields parsed from the http access logs.
+    """
+    if filter:
+        filtered_df = df[df['user_agent'].str.contains(filter)]
+    else:
+        filtered_df = df
+    
+    if ip_filter:
+        filtered_df = filtered_df[filtered_df['ip_address'].str.contains(ip_filter)]
+
+    print(f"{len(df)}; {len(filtered_df)}")
+    urls = filtered_df['url'].to_list()
+    counts = Counter(urls)
+
+    keys =  list(counts.keys())
+    values = list(counts.values())
+    combined = list(zip(values, keys))
+    sorted_list = sorted(combined, reverse=True)
+
+    print(f"=========== HITS BY URL user_agent={filter} ip_address={ip_filter} ================")
+    for v, k in sorted_list[0:20]:
+        print(f"{k}: {v}")
+
+def output_hits_by_ip(df: pd.DataFrame, filter: str = None):
+    """
+    Summary output of number of hits by ip address.
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input dataframe consisting of fields parsed from the http access logs.
+    """
+    if filter:
+        filtered_df = df[df['user_agent'].str.contains(filter)]
+    else:
+        filtered_df = df
+    print(f"{len(df)}; {len(filtered_df)}")
+    urls = filtered_df['ip_address'].to_list()
+    counts = Counter(urls)
+
+    keys =  list(counts.keys())
+    values = list(counts.values())
+    combined = list(zip(values, keys))
+    sorted_list = sorted(combined, reverse=True)
+
+    print(f"=========== HITS BY IP user_agent={filter} ================")
     for v, k in sorted_list[0:20]:
         print(f"{k}: {v}")
 
@@ -132,19 +193,27 @@ def output_influx(df: pd.DataFrame) -> None:
     df : pd.DataFrame
         Input dataframe containing parsed data from http access logs.
     """
-    url = "http://18.218.224.50:8086"
+    url = "http://127.0.0.1:8086"
     org = "SAA"
     bucket = "SAA-Bucket"
     token_file = "secrets/influxdb_token.txt"
     with open(token_file, "r") as f:
         token = f.read()[:-1]
+    token = "b128lTbCkPLv20yEZY0_AGe_w0OehSyQvfzY3eOScxbVn33LtG3RAR1m3EuwOVdMU90nsVs1z4GUiKWMhUX1Uw=="
     df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d/%b/%Y:%H:%M:%S %z')
     df['response_size'] = df['response_size'].astype(int)
     with InfluxDBClient(url=url, token=token, org=org) as client:
         # Create a write api instance
         write_api = client.write_api(write_options=SYNCHRONOUS)
 
+        points_block = []
         for index, row in df.iterrows():
+            
+            print(f"before ts={row['timestamp']}")
+            ms = abs(hash(row['user_agent'] + row['ip_address'] + row['url'] + str(row['response_size']) + row['full_url'])) % 1000
+            row['timestamp'] = row['timestamp'] + pd.Timedelta(milliseconds=ms)
+            print(f"after ts={row['timestamp']}")
+            
             # ip_address,timestamp,method,url,http_version,status_code,response_size,user_agent,is_bot
             # Create a data point using the Point structure
             point = Point("http_access_log") \
@@ -157,15 +226,14 @@ def output_influx(df: pd.DataFrame) -> None:
                     .field("response_size", row['response_size']) \
                     .field("is_bot", row['is_bot']) \
                     .time(row['timestamp'], WritePrecision.MS) # Use appropriate precision
+            points_block.append(point)
 
-            # Write the data point
-            try:
-                write_api.write(bucket=bucket, org=org, record=point)
-            except Exception as e:
-                print(f"Error: unexpected exception writing to influxdb. e={e}")
-            if not (index % 1000):
-                print(f"Sleeping for influxdb {index} ...")
-                time.sleep(10)
+        print(f"points_block_len={len(points_block)}")
+        # Write the data point
+        try:
+            write_api.write(bucket=bucket, org=org, record=points_block)
+        except Exception as e:
+            print(f"Error: unexpected exception writing to influxdb. e={e}")
 
         print("Metric written successfully!")
 def process_batch() -> list:
@@ -235,7 +303,11 @@ if __name__ == "__main__":
 
     # 2. Add arguments
     parser.add_argument("--logfiles", nargs='+', help="The http access log")
+    parser.add_argument("--filter", default=None, help="User agent filter")
+    parser.add_argument("--ip_filter", default=None, help="Print out hit by ip data")
     parser.add_argument("--hits", action="store_true", help="Print out hit data")
+    parser.add_argument("--url", action="store_true", help="Print out hit by url data")
+    parser.add_argument("--ip", action="store_true", help="Print out hit by ip data")
     parser.add_argument("--size", action="store_true", help="Print out response size data")
     parser.add_argument("--output", default=None, help="Specify the path to the output file.")
     parser.add_argument("--influx", action="store_true", help="Write to influxdb")
@@ -255,6 +327,11 @@ if __name__ == "__main__":
          output_hits(df)
     if args.size:
          output_response_size(df)
+    if args.url:
+         output_hits_by_url(df, filter=args.filter, ip_filter=args.ip_filter)
+    if args.ip:
+         output_hits_by_ip(df, filter=args.filter)
+
     if args.output:
         df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d/%b/%Y:%H:%M:%S %z')
         df['is_bot'] = df['is_bot'].astype(str)

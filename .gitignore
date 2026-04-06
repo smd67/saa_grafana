@@ -215,3 +215,7 @@ secrets
 
 data/
 data
+
+grafana-storage/
+grafana-storage
+chrome_hits.txt

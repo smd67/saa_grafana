@@ -5,7 +5,7 @@ datasources:
     type: influxdb
     access: proxy
     editable: true
-    url: http://18.218.224.50:8086 # Replace with your InfluxDB 1.x URL
+    url: http://host.docker.internal:8086 # Replace with your InfluxDB 1.x URL
     jsonData:
       defaultBucket: SAA-Bucket
       organization: SAA
