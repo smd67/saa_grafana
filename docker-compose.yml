@@ -6,6 +6,24 @@ services:
     container_name: influxdb
     ports:
       - "8086:8086"
+    environment:
+      # Triggers the automatic initialization workflow
+      - DOCKER_INFLUXDB_INIT_MODE=setup
+      
+      # Default Organization and Bucket configuration
+      - DOCKER_INFLUXDB_INIT_ORG=SAA
+      - DOCKER_INFLUXDB_INIT_BUCKET=BOT-DETECTOR-BUCKET
+      
+      # Admin Credentials
+      - DOCKER_INFLUXDB_INIT_USERNAME=admin
+      - DOCKER_INFLUXDB_INIT_PASSWORD=adminpasswd
+      
+      # Static API Token for downstream services (Telegraf/Grafana)
+      - DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=NladNlVeoGu4y52A7ID-4YScEuKdVchydBrvDSuYp5Yl-l20RMhigMm7uvPQtM6fUdXCanwow-nUdIKkCtKKpw==
+      
+      # Optional: Retention period for the default bucket (e.g., 30d, 72h). 
+      # Remove or set to 0 for infinite retention.
+      - DOCKER_INFLUXDB_INIT_RETENTION=120d
     volumes:
       - influxdb_data:/var/lib/influxdb
     restart: always
@@ -23,6 +41,7 @@ services:
     environment:
       - GF_SERVER_ROOT_URL=http://127.0.0.1:3000
       - GF_INFLUXDB_TOKEN_FILE=/run/secrets/influxdb_token
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/etc/grafana/provisioning/dashboards/Bot_Detector.json
     secrets:
           - influxdb_token
     restart: unless-stopped

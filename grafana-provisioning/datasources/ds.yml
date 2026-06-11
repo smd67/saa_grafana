@@ -13,3 +13,17 @@ datasources:
      
     secureJsonData:
       token: ${GF_INFLUXDB_TOKEN_FILE} # Required for InfluxDB v2, or a username/password for v1.8+ authentication
+  - id: 2
+    name: influxdb-Bot-Detector
+    type: influxdb
+    access: proxy
+    editable: true
+    url: http://host.docker.internal:8086 # Replace with your InfluxDB 1.x URL
+    jsonData:
+      defaultBucket: BOT-DETECTOR-BUCKET
+      organization: SAA
+      version: Flux
+      timeout: 3600
+     
+    secureJsonData:
+      token: NladNlVeoGu4y52A7ID-4YScEuKdVchydBrvDSuYp5Yl-l20RMhigMm7uvPQtM6fUdXCanwow-nUdIKkCtKKpw==

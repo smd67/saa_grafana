@@ -66,6 +66,8 @@ def extract(log_files: list) -> pd.DataFrame:
                     print(f"Device Type: {'Mobile' if user_agent_obj.is_mobile else 'Tablet' if user_agent_obj.is_tablet else 'Desktop'}")
                     print(f"Is a bot: {user_agent_obj.is_bot}")
                     full_url = url
+                    if url.startswith("/?"):
+                        url = "/" + url[2:]
                     if '?' in url:
                         url = url.split('?')[0]
                     elif '&' in url:
@@ -199,7 +201,7 @@ def output_influx(df: pd.DataFrame) -> None:
     token_file = "secrets/influxdb_token.txt"
     with open(token_file, "r") as f:
         token = f.read()[:-1]
-    token = "b128lTbCkPLv20yEZY0_AGe_w0OehSyQvfzY3eOScxbVn33LtG3RAR1m3EuwOVdMU90nsVs1z4GUiKWMhUX1Uw=="
+    token = "XfGouOJU11Hj3mQsYvqqFMzXfg6v1rmP8Uq0AAHni73VEhnWR-auGC3LrjbFPQ3TUksufDjnad5-DS-yoJanYQ=="
     df['timestamp'] = pd.to_datetime(df['timestamp'], format='%d/%b/%Y:%H:%M:%S %z')
     df['response_size'] = df['response_size'].astype(int)
     with InfluxDBClient(url=url, token=token, org=org) as client:
@@ -210,8 +212,8 @@ def output_influx(df: pd.DataFrame) -> None:
         for index, row in df.iterrows():
             
             print(f"before ts={row['timestamp']}")
-            ms = abs(hash(row['user_agent'] + row['ip_address'] + row['url'] + str(row['response_size']) + row['full_url'])) % 1000
-            row['timestamp'] = row['timestamp'] + pd.Timedelta(milliseconds=ms)
+            us = abs(hash(row['user_agent'] + row['ip_address'] +  str(row['response_size']) + row['full_url'])) % 1000000
+            row['timestamp'] = row['timestamp'] + pd.Timedelta(microseconds=us)
             print(f"after ts={row['timestamp']}")
             
             # ip_address,timestamp,method,url,http_version,status_code,response_size,user_agent,is_bot
@@ -225,13 +227,19 @@ def output_influx(df: pd.DataFrame) -> None:
                     .field("status_code", row['status_code']) \
                     .field("response_size", row['response_size']) \
                     .field("is_bot", row['is_bot']) \
-                    .time(row['timestamp'], WritePrecision.MS) # Use appropriate precision
+                    .time(row['timestamp'], WritePrecision.US) # Use appropriate precision
             points_block.append(point)
 
         print(f"points_block_len={len(points_block)}")
         # Write the data point
         try:
-            write_api.write(bucket=bucket, org=org, record=points_block)
+            chunk_size = 2048
+            points_block_chunks = [points_block[i:i + chunk_size] for i in range(0, len(points_block), chunk_size)]
+            
+            for idx, points_block_chunk in enumerate(points_block_chunks):
+                print(f"Sending chunk {idx}")
+                write_api.write(bucket=bucket, org=org, record=points_block_chunk)
+                time.sleep(1)
         except Exception as e:
             print(f"Error: unexpected exception writing to influxdb. e={e}")
 
